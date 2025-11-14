@@ -25,7 +25,7 @@ def classify_sdg(row):
     # donor = row.get("DonorName", "")
     # agency = row.get("AgencyName", "")
     # purpose = row.get("PurposeName", "")
-    # sector = row.get("SectorNamee", "")
+    # sector = row.get("SectorName", "")
 
     title = row.get("project_title", "")
     short_desc = row.get("short_description", "")

@@ -115,7 +115,7 @@ def classify_sdg(row):
 
     Use only the official UN SDG target definitions when making your decision.
     """
-
+    response = None
     try:
         # Combine system and user prompts for the Responses API
         combined_prompt = f"""You are a highly accurate SDG classification model that maps projects to official UN SDG targets.
@@ -188,7 +188,8 @@ def classify_sdg(row):
         return sdg_codes, avg_confidence
     except Exception as e:
         print(f"Parse error: {e}")
-        print(f"Response was: {response.output_text[:200] if 'response' in locals() else 'No response'}")
+        if response:
+            print(f"Response was: {response.output_text[:200] if 'response' in locals() else 'No response'}")
         return [], 0
 
 

@@ -19,13 +19,21 @@ def classify_sdg(row):
     Returns SDG codes (e.g., 301 for Goal 3 Target 1, 300 for Goal 3 only) and confidence score.
     Only returns classifications with individual confidence >= 0.8.
     """
-    title = row.get("ProjectTitle", "")
-    short_desc = row.get("ShortDescription", "")
-    long_desc = row.get("LongDescription", "")
-    donor = row.get("DonorName", "")
-    agency = row.get("AgencyName", "")
-    purpose = row.get("PurposeName", "")
-    sector = row.get("SectorNamee", "")
+    # title = row.get("ProjectTitle", "")
+    # short_desc = row.get("ShortDescription", "")
+    # long_desc = row.get("LongDescription", "")
+    # donor = row.get("DonorName", "")
+    # agency = row.get("AgencyName", "")
+    # purpose = row.get("PurposeName", "")
+    # sector = row.get("SectorNamee", "")
+
+    title = row.get("project_title", "")
+    short_desc = row.get("short_description", "")
+    long_desc = row.get("long_description", "")
+    donor = row.get("donor_name", "")
+    agency = row.get("agency_name", "")
+    purpose = row.get("purpose_name", "")
+    sector = row.get("sector_name", "")
 
     project_text = f"""
     Project Title: {title}
@@ -54,13 +62,12 @@ def classify_sdg(row):
     3. Assign the project to **one or more SDG targets** that are most directly relevant.
     4. If the project is **vague**, **general**, or focused on **coordination, management, or administration**
        without a direct thematic focus (e.g., "humanitarian coordination", "oversight", "co-financing",
-       "logistics support", "program management"), then return an empty classifications list.
+       "logistics support", "program management"), then classify it as **DNC (Does Not Connect)**.
+        - DNC means the project does not have a clear, direct link to any SDG target.
        - Avoid forcing a classification when there is no clear substantive focus.
     5. Return the results in a valid JSON object.
-    6. If the project clearly does not relate to any SDG target, but it can be clearly related at the goal level,
-       return a goal number (1-17) with an empty targets list.
-    7. If the project clearly does not relate to any SDG target nor a goal, return an empty classifications list.
-    8. IMPORTANT: The "goal" field must ALWAYS be a number (1-17), never text like "DNC".
+    6. If the project clearly does not relate to any SDG target, but it can be clearly related at the goal level, return a goal.
+    7. If the project clearly does not relate to any SDG target nor a goal, return an empty list.
 
     ---
     **OUTPUT FORMAT (strict JSON)**
@@ -75,9 +82,7 @@ def classify_sdg(row):
     }}
 
     ---
-    **Example responses:**
-
-    Example 1 (with specific targets):
+    **Example response:**
     {{
       "classifications": [
         {{
@@ -91,22 +96,6 @@ def classify_sdg(row):
           "confidence": 0.82
         }}
       ]
-    }}
-
-    Example 2 (goal level only, no specific targets):
-    {{
-      "classifications": [
-        {{
-          "goal": 3,
-          "targets": [],
-          "confidence": 0.85
-        }}
-      ]
-    }}
-
-    Example 3 (no clear SDG connection):
-    {{
-      "classifications": []
     }}
 
     ---
@@ -123,7 +112,7 @@ def classify_sdg(row):
 {user_prompt}"""
 
         response = client.responses.create(
-            model="gpt-4o",
+            model="gpt-4o-mini",
             input=combined_prompt
         )
         content = response.output_text

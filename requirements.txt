@@ -1,0 +1,7 @@
+transformers>=4.30
+torch         # pick the correct torch install for your machine (see note below)
+pandas
+numpy
+openai
+python-dotenv
+tqdm

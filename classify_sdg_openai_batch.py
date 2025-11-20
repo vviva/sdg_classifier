@@ -323,6 +323,15 @@ def process_batch_results(batch_output_file, input_df, output_csv):
     # Read batch results
     results = {}
     error_count = 0
+    total_input_tokens = 0
+    total_output_tokens = 0
+    total_tokens = 0
+
+    # OpenAI Batch API pricing for gpt-4o-mini (50% discount)
+    # https://openai.com/api/pricing/
+    PRICE_PER_1M_INPUT_TOKENS = 0.075  # USD
+    PRICE_PER_1M_OUTPUT_TOKENS = 0.300  # USD
+
     with open(batch_output_file, 'r', encoding='utf-8') as f:
         for line in f:
             result = json.loads(line)
@@ -353,6 +362,18 @@ def process_batch_results(batch_output_file, input_df, output_csv):
                     # Parse the response
                     sdg_codes, confidence = parse_batch_response(output_text)
                     results[idx] = (sdg_codes, confidence)
+
+                    # Extract token usage
+                    usage = response_body.get('usage', {})
+                    if usage:
+                        input_tokens = usage.get('input_tokens', 0)
+                        output_tokens = usage.get('output_tokens', 0)
+                        tokens = usage.get('total_tokens', 0)
+
+                        total_input_tokens += input_tokens
+                        total_output_tokens += output_tokens
+                        total_tokens += tokens
+
                 except (KeyError, IndexError, TypeError) as e:
                     print(f"Error parsing response for {custom_id}: {e}")
                     results[idx] = ([], 0)
@@ -377,14 +398,46 @@ def process_batch_results(batch_output_file, input_df, output_csv):
     result_df = pd.DataFrame(output_rows)
     result_df.to_csv(output_csv, index=False)
 
+    # Calculate costs
+    input_cost = (total_input_tokens / 1_000_000) * PRICE_PER_1M_INPUT_TOKENS
+    output_cost = (total_output_tokens / 1_000_000) * PRICE_PER_1M_OUTPUT_TOKENS
+    total_cost = input_cost + output_cost
+
+    # Calculate what it would have cost with standard API (for comparison)
+    standard_input_price = 0.150  # USD per 1M tokens
+    standard_output_price = 0.600  # USD per 1M tokens
+    standard_cost = ((total_input_tokens / 1_000_000) * standard_input_price +
+                     (total_output_tokens / 1_000_000) * standard_output_price)
+    savings = standard_cost - total_cost
+    savings_percentage = (savings / standard_cost * 100) if standard_cost > 0 else 0
+
     # Print summary
-    print(f"\n{'='*60}")
-    print(f"Processing complete!")
-    print(f"{'='*60}")
-    print(f"Total requests: {len(input_df)}")
-    print(f"Successful: {len(results) - error_count}")
-    print(f"Errors: {error_count}")
-    print(f"Results saved to: {output_csv}")
+    print(f"\n{'='*70}")
+    print(f"PROCESSING COMPLETE!")
+    print(f"{'='*70}")
+    print(f"\nRequests:")
+    print(f"  Total requests:  {len(input_df)}")
+    print(f"  Successful:      {len(results) - error_count}")
+    print(f"  Errors:          {error_count}")
+
+    print(f"\nToken Usage:")
+    print(f"  Input tokens:    {total_input_tokens:,}")
+    print(f"  Output tokens:   {total_output_tokens:,}")
+    print(f"  Total tokens:    {total_tokens:,}")
+
+    print(f"\nCost Breakdown (Batch API - 50% discount):")
+    print(f"  Input cost:      ${input_cost:.4f}  ({total_input_tokens:,} tokens @ ${PRICE_PER_1M_INPUT_TOKENS}/1M)")
+    print(f"  Output cost:     ${output_cost:.4f}  ({total_output_tokens:,} tokens @ ${PRICE_PER_1M_OUTPUT_TOKENS}/1M)")
+    print(f"  Total cost:      ${total_cost:.4f}")
+
+    print(f"\nCost Comparison:")
+    print(f"  Standard API:    ${standard_cost:.4f}")
+    print(f"  Batch API:       ${total_cost:.4f}")
+    print(f"  Savings:         ${savings:.4f} ({savings_percentage:.1f}% discount)")
+
+    print(f"\nOutput:")
+    print(f"  Results saved to: {output_csv}")
+    print(f"{'='*70}\n")
 
     return result_df
 

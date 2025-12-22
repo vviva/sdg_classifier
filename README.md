@@ -1,6 +1,6 @@
 # SDG Classifier
 
-Classification of development projects to UN Sustainable Development Goals (SDGs) using OpenAI API.
+Classification of OECD DAC CRS development projects to UN Sustainable Development Goals (SDGs) using OpenAI API.
 
 ## Setup
 
@@ -50,20 +50,6 @@ python classify_sdg_openai_batch.py --download-results BATCH_JOB_ID --input CRS_
 - Processes large datasets efficiently
 - Displays token usage and cost breakdown
 - Automatic wait and download when creating batch
-
-### evaluate_openai_classifier.py
-Evaluates classifier accuracy against ground truth data.
-
-**Usage:**
-```bash
-python evaluate_openai_classifier.py --samples 100 --input ground_truth.csv --output evaluation_results.csv
-```
-
-**Features:**
-- Tests classifier on labeled data
-- Calculates exact match and partial match accuracy
-- Adjustable confidence threshold
-- Detailed per-sample results
 
 ## Input Format
 
